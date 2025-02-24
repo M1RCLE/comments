@@ -1,0 +1,11 @@
+type Post {
+    id: ID!,
+    body: String,
+    userId: ID!,
+    comments: [Comment!],
+}
+
+input PostInput {
+    userId: ID!,
+    body: String,
+}

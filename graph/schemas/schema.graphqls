@@ -1,0 +1,19 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Query {
+  getPosts(limit: Int = 5): [Post!]
+  getPost(postID: ID!): Post!
+  getComments(limit: Int = 5): [Comment!]
+  getComment(commentID: ID!) Comment!
+}
+
+type Mutation {
+  createPost(post: PostInput!): Post!
+  createComment(comment: CommentInput!): Comment!
+}
+
+type Subscription {
+  registerComment(userID: ID!, postID: ID!): Comment!
+}

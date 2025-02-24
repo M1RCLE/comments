@@ -1,0 +1,21 @@
+type Comment {
+    id: ID!,
+    userId: ID!,
+    postId: ID!,
+    body: String!,
+    parent: ID,
+    # TODO: think about replies
+}
+
+input CommentInput {
+    userId: ID!,
+    postId: ID!,
+    body: String!,
+}
+
+input SubCommentInput {
+    userId: ID!,
+    postId: ID!,
+    parent: ID!,
+    body: String!,
+}
