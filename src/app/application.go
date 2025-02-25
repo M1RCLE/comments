@@ -110,14 +110,12 @@ func StartApp() {
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 		defer cancel()
 
-		select {
-		case <-timeoutCtx.Done():
-			if errors.Is(timeoutCtx.Err(), context.DeadlineExceeded) {
-				return timeoutCtx.Err()
-			}
-
-			return nil
+		<-timeoutCtx.Done()
+		if errors.Is(timeoutCtx.Err(), context.DeadlineExceeded) {
+			return timeoutCtx.Err()
 		}
+
+		return nil
 	})
 
 	err = errGroup.Wait()
