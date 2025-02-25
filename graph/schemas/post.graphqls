@@ -1,3 +1,5 @@
+scalar Time
+
 type Post {
     id: ID!,
     body: String!,

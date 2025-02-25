@@ -58,8 +58,8 @@ func (r *queryResolver) Posts(ctx context.Context, limit *int) ([]*entity.Post, 
 }
 
 // Post is the resolver for the Post field.
-func (r *queryResolver) Post(ctx context.Context, postID int) (*entity.Post, error) {
-	return r.PostService.GetPostById(ctx, postID)
+func (r *queryResolver) Post(ctx context.Context, postId int) (*entity.Post, error) {
+	return r.PostService.GetPostById(ctx, postId)
 }
 
 // Comments is the resolver for the Comments field.
@@ -68,13 +68,13 @@ func (r *queryResolver) Comments(ctx context.Context, limit *int) ([]*entity.Com
 }
 
 // Comment is the resolver for the Comment field.
-func (r *queryResolver) Comment(ctx context.Context, commentID int) (*entity.Comment, error) {
-	return r.CommentService.GetCommentById(ctx, commentID)
+func (r *queryResolver) Comment(ctx context.Context, commentId int) (*entity.Comment, error) {
+	return r.CommentService.GetCommentById(ctx, commentId)
 }
 
 // RegisterSubscription is the resolver for the registerSubscription field.
-func (r *subscriptionResolver) RegisterSubscription(ctx context.Context, userID int, postID int) (<-chan *entity.Comment, error) {
-	return r.SubscriptionService.RegisterSubscription(ctx, userID, postID)
+func (r *subscriptionResolver) RegisterSubscription(ctx context.Context, userId int, postId int) (<-chan *entity.Comment, error) {
+	return r.SubscriptionService.RegisterSubscription(ctx, userId, postId)
 }
 
 // Mutation returns generated.MutationResolver implementation.

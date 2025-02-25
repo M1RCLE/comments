@@ -2,13 +2,11 @@
 #
 # https://gqlgen.com/getting-started/
 
-scalar Time
-
 type Query {
   posts(limit: Int = 5): [Post!]
-  post(postID: ID!): Post!
+  post(postId: ID!): Post!
   comments(limit: Int = 5): [Comment!]
-  comment(commentID: ID!): Comment!
+  comment(commentId: ID!): Comment!
 }
 
 type Mutation {
@@ -18,5 +16,5 @@ type Mutation {
 }
 
 type Subscription {
-  registerSubscription(userID: ID!, postID: ID!): Comment!
+  registerSubscription(userId: ID!, postId: ID!): Comment!
 }

@@ -28,6 +28,55 @@ func NewPost(id int, body string, userId int, commentsAllowed bool) *Post {
 	}
 }
 
-func (post *Post) AddComment(commentId int, comment *entity.Comment) {
-	post.Comments[commentId] = comment
+func (post *Post) AddComment(comment *entity.Comment) *entity.Comment {
+	post.Lock()
+	defer post.Unlock()
+
+	if _, ok := post.Comments[comment.ID]; ok {
+		return nil
+	}
+
+	comment.ID = post.IdUpscaler
+	post.IdUpscaler++
+	post.Comments[comment.ID] = comment
+
+	return comment
+}
+
+func (post *Post) AddSubComment(comment *entity.Comment) *entity.Comment {
+	post.Lock()
+	defer post.Unlock()
+
+	if _, ok := post.Comments[*comment.ParentId]; !ok {
+		return nil
+	}
+
+	if _, ok := post.Comments[*comment.ParentId]; !ok {
+		return nil
+	}
+
+	comment.ID = post.IdUpscaler
+	post.IdUpscaler++
+	post.Comments[comment.ID] = comment
+
+	return comment
+}
+
+func (post *Post) DeleteComment(commentId int) []*entity.Comment {
+	post.Lock()
+	defer post.Unlock()
+
+	comment, ok := post.Comments[commentId]
+	if !ok {
+		return nil
+	}
+
+	for _, repComment := range comment.RelatedComments {
+		post.Unlock()
+		post.DeleteComment(repComment.ID)
+		post.Lock()
+	}
+	delete(post.Comments, commentId)
+
+	return nil
 }

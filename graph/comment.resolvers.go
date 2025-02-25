@@ -7,14 +7,13 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/M1RCLE/comments/graph/generated"
 	"github.com/M1RCLE/comments/src/entity"
 )
 
 // CreationTime is the resolver for the creationTime field.
-func (r *commentResolver) CreationTime(ctx context.Context, obj *entity.Comment) (*time.Time, error) {
+func (r *commentResolver) CreationTime(ctx context.Context, obj *entity.Comment) (string, error) {
 	panic(fmt.Errorf("not implemented: CreationTime - creationTime"))
 }
 

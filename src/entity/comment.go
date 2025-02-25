@@ -8,7 +8,10 @@ type Comment struct {
 	PostId          int        `json:"postId"`
 	Body            string     `json:"body"`
 	ParentId        *int       `json:"parent"`
-	Indentation     int        `json:"indentation"`
+	CreationTime    time.Time  `json:"creationTime"`
 	RelatedComments []*Comment `json:"relatedComments"`
-	CreatedAt       time.Time  `json:"createdAt"`
+}
+
+func (c *Comment) GetCreationTime() time.Time {
+	return c.CreationTime
 }

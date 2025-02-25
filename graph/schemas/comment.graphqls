@@ -1,4 +1,4 @@
-scalar CreationTime
+scalar Time
 
 type Comment {
     id: ID!,
@@ -6,15 +6,14 @@ type Comment {
     postId: ID!,
     body: String!,
     parentId: ID,
-    indentation: Int!,
-    creationTime: CreationTime!
+    creationTime: Time!
     relatedComments: [Comment!],
 }
 
 input CommentInput {
     userId: ID!,
     postId: ID!,
-    creationTime: CreationTime!,
+    creationTime: Time!,
     body: String!,
 }
 
@@ -22,6 +21,6 @@ input SubCommentInput {
     userId: ID!,
     postId: ID!,
     parentId: ID!,
-    creationTime: CreationTime!,
+    creationTime: Time!,
     body: String!,
 }

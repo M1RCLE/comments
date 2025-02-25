@@ -1,6 +1,6 @@
 package entity
 
 type Pagination struct {
-	offset int
-	limit  int
+	Offset int
+	Limit  int
 }
