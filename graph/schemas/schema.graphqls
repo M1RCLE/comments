@@ -3,15 +3,16 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  getPosts(limit: Int = 5): [Post!]
-  getPost(postID: ID!): Post!
-  getComments(limit: Int = 5): [Comment!]
-  getComment(commentID: ID!) Comment!
+  posts(limit: Int = 5): [Post!]
+  post(postID: ID!): Post!
+  comments(limit: Int = 5): [Comment!]
+  comment(commentID: ID!): Comment!
 }
 
 type Mutation {
   createPost(post: PostInput!): Post!
   createComment(comment: CommentInput!): Comment!
+  createSubComment(comment: SubCommentInput!): Comment!
 }
 
 type Subscription {

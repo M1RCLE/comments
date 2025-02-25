@@ -1,11 +1,13 @@
 type Post {
     id: ID!,
-    body: String,
+    body: String!,
     userId: ID!,
     comments: [Comment!],
+    commentsAllowed: Boolean!,
 }
 
 input PostInput {
     userId: ID!,
-    body: String,
+    body: String!,
+    commentsAllowed: Boolean!,
 }

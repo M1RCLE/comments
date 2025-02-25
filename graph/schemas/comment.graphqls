@@ -3,8 +3,9 @@ type Comment {
     userId: ID!,
     postId: ID!,
     body: String!,
-    parent: ID,
-    # TODO: think about replies
+    parentId: ID,
+    indentation: Int!,
+    relatedComments: [Comment!],
 }
 
 input CommentInput {
@@ -16,6 +17,6 @@ input CommentInput {
 input SubCommentInput {
     userId: ID!,
     postId: ID!,
-    parent: ID!,
+    parentId: ID!,
     body: String!,
 }

@@ -2,25 +2,30 @@
 
 package model
 
+type CommentInput struct {
+	UserID int    `json:"userId"`
+	PostID int    `json:"postId"`
+	Body   string `json:"body"`
+}
+
 type Mutation struct {
 }
 
-type NewTodo struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+type PostInput struct {
+	UserID          int    `json:"userId"`
+	Body            string `json:"body"`
+	CommentsAllowed bool   `json:"commentsAllowed"`
 }
 
 type Query struct {
 }
 
-type Todo struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Done bool   `json:"done"`
-	User *User  `json:"user"`
+type SubCommentInput struct {
+	UserID   int    `json:"userId"`
+	PostID   int    `json:"postId"`
+	ParentID int    `json:"parentId"`
+	Body     string `json:"body"`
 }
 
-type User struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type Subscription struct {
 }

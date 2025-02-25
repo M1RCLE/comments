@@ -8,24 +8,68 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/M1RCLE/comments/graph/generated"
 	"github.com/M1RCLE/comments/graph/model"
+	"github.com/M1RCLE/comments/src/entity"
 )
 
-// CreateTodo is the resolver for the createTodo field.
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
+// CreatePost is the resolver for the createPost field.
+func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput) (*entity.Post, error) {
+	return r.PostService.CreatePost(ctx, entity.Post{
+		Body:            post.Body,
+		UserID:          post.UserID,
+		CommentsAllowed: post.CommentsAllowed,
+	})
 }
 
-// Todos is the resolver for the todos field.
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+// CreateComment is the resolver for the createComment field.
+func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (*entity.Comment, error) {
+	return r.CommentService.CreateComment(ctx, entity.Comment{
+		Body:   comment.Body,
+		UserID: comment.UserID,
+		PostID: comment.PostID,
+	})
 }
 
-// Mutation returns MutationResolver implementation.
-func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+// CreateSubComment is the resolver for the createSubComment field.
+func (r *mutationResolver) CreateSubComment(ctx context.Context, comment model.SubCommentInput) (*entity.Comment, error) {
+	panic(fmt.Errorf("not implemented: CreateSubComment - createSubComment"))
+}
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+// Posts is the resolver for the Posts field.
+func (r *queryResolver) Posts(ctx context.Context, limit *int) ([]*entity.Post, error) {
+	panic(fmt.Errorf("not implemented: Posts - Posts"))
+}
+
+// Post is the resolver for the Post field.
+func (r *queryResolver) Post(ctx context.Context, postID int) (*entity.Post, error) {
+	panic(fmt.Errorf("not implemented: Post - Post"))
+}
+
+// Comments is the resolver for the Comments field.
+func (r *queryResolver) Comments(ctx context.Context, limit *int) ([]*entity.Comment, error) {
+	panic(fmt.Errorf("not implemented: Comments - Comments"))
+}
+
+// Comment is the resolver for the Comment field.
+func (r *queryResolver) Comment(ctx context.Context, commentID int) (*entity.Comment, error) {
+	panic(fmt.Errorf("not implemented: Comment - Comment"))
+}
+
+// RegisterComment is the resolver for the registerComment field.
+func (r *subscriptionResolver) RegisterComment(ctx context.Context, userID int, postID int) (<-chan *entity.Comment, error) {
+	panic(fmt.Errorf("not implemented: RegisterComment - registerComment"))
+}
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
+// Query returns generated.QueryResolver implementation.
+func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

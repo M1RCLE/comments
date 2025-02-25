@@ -4,4 +4,11 @@ package graph
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 
-type Resolver struct{}
+import (
+	service "github.com/M1RCLE/comments/src/service/interface"
+)
+
+type Resolver struct {
+	PostService    service.Post
+	CommentService service.Comment
+}
