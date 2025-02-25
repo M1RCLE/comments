@@ -4,10 +4,10 @@ import (
 	"fmt"
 )
 
-type CommentError struct {
+type ProcessError struct {
 	Message string
 }
 
-func (e *CommentError) Error() string {
+func (e *ProcessError) Error() string {
 	return fmt.Sprintf("Comment Error: %s", e.Message)
 }

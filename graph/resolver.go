@@ -14,9 +14,10 @@ type Resolver struct {
 	SubscriptionService service.Subscription
 }
 
-func NewResolver(postService service.Post, commentService service.Comment) *Resolver {
+func NewResolver(postService service.Post, commentService service.Comment, subscriptionService service.Subscription) *Resolver {
 	return &Resolver{
-		PostService:    postService,
-		CommentService: commentService,
+		PostService:         postService,
+		CommentService:      commentService,
+		SubscriptionService: subscriptionService,
 	}
 }

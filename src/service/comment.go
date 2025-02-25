@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/M1RCLE/comments/src/entity"
-	contract "github.com/M1RCLE/comments/src/repository"
+	"github.com/M1RCLE/comments/src/repository/contract"
 )
 
 type CommentService struct {

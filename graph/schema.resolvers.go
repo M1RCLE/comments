@@ -23,8 +23,9 @@ func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput)
 
 // CreateComment is the resolver for the createComment field.
 func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (*entity.Comment, error) {
+	// TODO: перенести проверку в сервис
 	if len(comment.Body) >= 2000 {
-		return nil, &entity.CommentError{Message: "Comment body is too large"}
+		return nil, &entity.ProcessError{Message: "Comment body is too large"}
 	}
 	return r.CommentService.CreateComment(ctx, entity.Comment{
 		Body:   comment.Body,
@@ -35,8 +36,9 @@ func (r *mutationResolver) CreateComment(ctx context.Context, comment model.Comm
 
 // CreateSubComment is the resolver for the createSubComment field.
 func (r *mutationResolver) CreateSubComment(ctx context.Context, comment model.SubCommentInput) (*entity.Comment, error) {
+	// TODO: перенести проверку в сервис
 	if len(comment.Body) >= 2000 {
-		return nil, &entity.CommentError{Message: "Comment body is too large"}
+		return nil, &entity.ProcessError{Message: "Comment body is too large"}
 	}
 	com, err := r.CommentService.GetCommentById(ctx, comment.ParentID)
 	if err != nil {
@@ -70,8 +72,8 @@ func (r *queryResolver) Comment(ctx context.Context, commentID int) (*entity.Com
 	return r.CommentService.GetCommentById(ctx, commentID)
 }
 
-// RegisterComment is the resolver for the registerComment field.
-func (r *subscriptionResolver) RegisterComment(ctx context.Context, userID int, postID int) (<-chan *entity.Comment, error) {
+// RegisterSubscription is the resolver for the registerSubscription field.
+func (r *subscriptionResolver) RegisterSubscription(ctx context.Context, userID int, postID int) (<-chan *entity.Comment, error) {
 	return r.SubscriptionService.RegisterSubscription(ctx, userID, postID)
 }
 

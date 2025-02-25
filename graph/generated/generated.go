@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -40,6 +41,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Comment() CommentResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Subscription() SubscriptionResolver
@@ -51,6 +53,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Comment struct {
 		Body            func(childComplexity int) int
+		CreationTime    func(childComplexity int) int
 		ID              func(childComplexity int) int
 		Indentation     func(childComplexity int) int
 		ParentId        func(childComplexity int) int
@@ -81,10 +84,13 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		RegisterComment func(childComplexity int, userID int, postID int) int
+		RegisterSubscription func(childComplexity int, userID int, postID int) int
 	}
 }
 
+type CommentResolver interface {
+	CreationTime(ctx context.Context, obj *entity.Comment) (*time.Time, error)
+}
 type MutationResolver interface {
 	CreatePost(ctx context.Context, post model.PostInput) (*entity.Post, error)
 	CreateComment(ctx context.Context, comment model.CommentInput) (*entity.Comment, error)
@@ -97,7 +103,7 @@ type QueryResolver interface {
 	Comment(ctx context.Context, commentID int) (*entity.Comment, error)
 }
 type SubscriptionResolver interface {
-	RegisterComment(ctx context.Context, userID int, postID int) (<-chan *entity.Comment, error)
+	RegisterSubscription(ctx context.Context, userID int, postID int) (<-chan *entity.Comment, error)
 }
 
 type executableSchema struct {
@@ -125,6 +131,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Comment.Body(childComplexity), true
+
+	case "Comment.creationTime":
+		if e.complexity.Comment.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.Comment.CreationTime(childComplexity), true
 
 	case "Comment.id":
 		if e.complexity.Comment.ID == nil {
@@ -287,17 +300,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Posts(childComplexity, args["limit"].(*int)), true
 
-	case "Subscription.registerComment":
-		if e.complexity.Subscription.RegisterComment == nil {
+	case "Subscription.registerSubscription":
+		if e.complexity.Subscription.RegisterSubscription == nil {
 			break
 		}
 
-		args, err := ec.field_Subscription_registerComment_args(context.TODO(), rawArgs)
+		args, err := ec.field_Subscription_registerSubscription_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Subscription.RegisterComment(childComplexity, args["userID"].(int), args["postID"].(int)), true
+		return e.complexity.Subscription.RegisterSubscription(childComplexity, args["userID"].(int), args["postID"].(int)), true
 
 	}
 	return 0, false
@@ -424,19 +437,23 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schemas/comment.graphqls", Input: `type Comment {
+	{Name: "../schemas/comment.graphqls", Input: `scalar CreationTime
+
+type Comment {
     id: ID!,
     userId: ID!,
     postId: ID!,
     body: String!,
     parentId: ID,
     indentation: Int!,
+    creationTime: CreationTime!
     relatedComments: [Comment!],
 }
 
 input CommentInput {
     userId: ID!,
     postId: ID!,
+    creationTime: CreationTime!,
     body: String!,
 }
 
@@ -444,6 +461,7 @@ input SubCommentInput {
     userId: ID!,
     postId: ID!,
     parentId: ID!,
+    creationTime: CreationTime!,
     body: String!,
 }`, BuiltIn: false},
 	{Name: "../schemas/post.graphqls", Input: `type Post {
@@ -463,6 +481,8 @@ input PostInput {
 #
 # https://gqlgen.com/getting-started/
 
+scalar Time
+
 type Query {
   posts(limit: Int = 5): [Post!]
   post(postID: ID!): Post!
@@ -477,7 +497,7 @@ type Mutation {
 }
 
 type Subscription {
-  registerComment(userID: ID!, postID: ID!): Comment!
+  registerSubscription(userID: ID!, postID: ID!): Comment!
 }
 `, BuiltIn: false},
 }
@@ -711,22 +731,22 @@ func (ec *executionContext) field_Query_posts_argsLimit(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Subscription_registerComment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Subscription_registerSubscription_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Subscription_registerComment_argsUserID(ctx, rawArgs)
+	arg0, err := ec.field_Subscription_registerSubscription_argsUserID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["userID"] = arg0
-	arg1, err := ec.field_Subscription_registerComment_argsPostID(ctx, rawArgs)
+	arg1, err := ec.field_Subscription_registerSubscription_argsPostID(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["postID"] = arg1
 	return args, nil
 }
-func (ec *executionContext) field_Subscription_registerComment_argsUserID(
+func (ec *executionContext) field_Subscription_registerSubscription_argsUserID(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (int, error) {
@@ -744,7 +764,7 @@ func (ec *executionContext) field_Subscription_registerComment_argsUserID(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Subscription_registerComment_argsPostID(
+func (ec *executionContext) field_Subscription_registerSubscription_argsPostID(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (int, error) {
@@ -1143,6 +1163,50 @@ func (ec *executionContext) fieldContext_Comment_indentation(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Comment_creationTime(ctx context.Context, field graphql.CollectedField, obj *entity.Comment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Comment_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Comment().CreationTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalNCreationTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Comment_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CreationTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Comment_relatedComments(ctx context.Context, field graphql.CollectedField, obj *entity.Comment) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Comment_relatedComments(ctx, field)
 	if err != nil {
@@ -1191,6 +1255,8 @@ func (ec *executionContext) fieldContext_Comment_relatedComments(_ context.Conte
 				return ec.fieldContext_Comment_parentId(ctx, field)
 			case "indentation":
 				return ec.fieldContext_Comment_indentation(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Comment_creationTime(ctx, field)
 			case "relatedComments":
 				return ec.fieldContext_Comment_relatedComments(ctx, field)
 			}
@@ -1318,6 +1384,8 @@ func (ec *executionContext) fieldContext_Mutation_createComment(ctx context.Cont
 				return ec.fieldContext_Comment_parentId(ctx, field)
 			case "indentation":
 				return ec.fieldContext_Comment_indentation(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Comment_creationTime(ctx, field)
 			case "relatedComments":
 				return ec.fieldContext_Comment_relatedComments(ctx, field)
 			}
@@ -1389,6 +1457,8 @@ func (ec *executionContext) fieldContext_Mutation_createSubComment(ctx context.C
 				return ec.fieldContext_Comment_parentId(ctx, field)
 			case "indentation":
 				return ec.fieldContext_Comment_indentation(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Comment_creationTime(ctx, field)
 			case "relatedComments":
 				return ec.fieldContext_Comment_relatedComments(ctx, field)
 			}
@@ -1589,6 +1659,8 @@ func (ec *executionContext) fieldContext_Post_comments(_ context.Context, field 
 				return ec.fieldContext_Comment_parentId(ctx, field)
 			case "indentation":
 				return ec.fieldContext_Comment_indentation(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Comment_creationTime(ctx, field)
 			case "relatedComments":
 				return ec.fieldContext_Comment_relatedComments(ctx, field)
 			}
@@ -1821,6 +1893,8 @@ func (ec *executionContext) fieldContext_Query_comments(ctx context.Context, fie
 				return ec.fieldContext_Comment_parentId(ctx, field)
 			case "indentation":
 				return ec.fieldContext_Comment_indentation(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Comment_creationTime(ctx, field)
 			case "relatedComments":
 				return ec.fieldContext_Comment_relatedComments(ctx, field)
 			}
@@ -1892,6 +1966,8 @@ func (ec *executionContext) fieldContext_Query_comment(ctx context.Context, fiel
 				return ec.fieldContext_Comment_parentId(ctx, field)
 			case "indentation":
 				return ec.fieldContext_Comment_indentation(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Comment_creationTime(ctx, field)
 			case "relatedComments":
 				return ec.fieldContext_Comment_relatedComments(ctx, field)
 			}
@@ -2043,8 +2119,8 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Subscription_registerComment(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	fc, err := ec.fieldContext_Subscription_registerComment(ctx, field)
+func (ec *executionContext) _Subscription_registerSubscription(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_registerSubscription(ctx, field)
 	if err != nil {
 		return nil
 	}
@@ -2057,7 +2133,7 @@ func (ec *executionContext) _Subscription_registerComment(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().RegisterComment(rctx, fc.Args["userID"].(int), fc.Args["postID"].(int))
+		return ec.resolvers.Subscription().RegisterSubscription(rctx, fc.Args["userID"].(int), fc.Args["postID"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2088,7 +2164,7 @@ func (ec *executionContext) _Subscription_registerComment(ctx context.Context, f
 	}
 }
 
-func (ec *executionContext) fieldContext_Subscription_registerComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_registerSubscription(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -2108,6 +2184,8 @@ func (ec *executionContext) fieldContext_Subscription_registerComment(ctx contex
 				return ec.fieldContext_Comment_parentId(ctx, field)
 			case "indentation":
 				return ec.fieldContext_Comment_indentation(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Comment_creationTime(ctx, field)
 			case "relatedComments":
 				return ec.fieldContext_Comment_relatedComments(ctx, field)
 			}
@@ -2121,7 +2199,7 @@ func (ec *executionContext) fieldContext_Subscription_registerComment(ctx contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Subscription_registerComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Subscription_registerSubscription_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4086,7 +4164,7 @@ func (ec *executionContext) unmarshalInputCommentInput(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"userId", "postId", "body"}
+	fieldsInOrder := [...]string{"userId", "postId", "creationTime", "body"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4107,6 +4185,13 @@ func (ec *executionContext) unmarshalInputCommentInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.PostID = data
+		case "creationTime":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creationTime"))
+			data, err := ec.unmarshalNCreationTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreationTime = data
 		case "body":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -4168,7 +4253,7 @@ func (ec *executionContext) unmarshalInputSubCommentInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"userId", "postId", "parentId", "body"}
+	fieldsInOrder := [...]string{"userId", "postId", "parentId", "creationTime", "body"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4196,6 +4281,13 @@ func (ec *executionContext) unmarshalInputSubCommentInput(ctx context.Context, o
 				return it, err
 			}
 			it.ParentID = data
+		case "creationTime":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creationTime"))
+			data, err := ec.unmarshalNCreationTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreationTime = data
 		case "body":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -4231,30 +4323,66 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Comment_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "userId":
 			out.Values[i] = ec._Comment_userId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "postId":
 			out.Values[i] = ec._Comment_postId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "body":
 			out.Values[i] = ec._Comment_body(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "parentId":
 			out.Values[i] = ec._Comment_parentId(ctx, field, obj)
 		case "indentation":
 			out.Values[i] = ec._Comment_indentation(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "creationTime":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Comment_creationTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "relatedComments":
 			out.Values[i] = ec._Comment_relatedComments(ctx, field, obj)
 		default:
@@ -4544,8 +4672,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	}
 
 	switch fields[0].Name {
-	case "registerComment":
-		return ec._Subscription_registerComment(ctx, fields[0])
+	case "registerSubscription":
+		return ec._Subscription_registerSubscription(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
@@ -4918,6 +5046,42 @@ func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋM1RCLEᚋcomments�
 func (ec *executionContext) unmarshalNCommentInput2githubᚗcomᚋM1RCLEᚋcommentsᚋgraphᚋmodelᚐCommentInput(ctx context.Context, v any) (model.CommentInput, error) {
 	res, err := ec.unmarshalInputCommentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreationTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreationTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNCreationTime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreationTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalTime(*v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalNID2int(ctx context.Context, v any) (int, error) {
