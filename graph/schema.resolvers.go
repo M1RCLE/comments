@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/M1RCLE/comments/graph/generated"
 	"github.com/M1RCLE/comments/graph/model"
@@ -17,48 +16,63 @@ import (
 func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput) (*entity.Post, error) {
 	return r.PostService.CreatePost(ctx, entity.Post{
 		Body:            post.Body,
-		UserID:          post.UserID,
+		UserId:          post.UserID,
 		CommentsAllowed: post.CommentsAllowed,
 	})
 }
 
 // CreateComment is the resolver for the createComment field.
 func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (*entity.Comment, error) {
+	if len(comment.Body) >= 2000 {
+		return nil, &entity.CommentError{Message: "Comment body is too large"}
+	}
 	return r.CommentService.CreateComment(ctx, entity.Comment{
 		Body:   comment.Body,
-		UserID: comment.UserID,
-		PostID: comment.PostID,
+		UserId: comment.UserID,
+		PostId: comment.PostID,
 	})
 }
 
 // CreateSubComment is the resolver for the createSubComment field.
 func (r *mutationResolver) CreateSubComment(ctx context.Context, comment model.SubCommentInput) (*entity.Comment, error) {
-	panic(fmt.Errorf("not implemented: CreateSubComment - createSubComment"))
+	if len(comment.Body) >= 2000 {
+		return nil, &entity.CommentError{Message: "Comment body is too large"}
+	}
+	com, err := r.CommentService.GetCommentById(ctx, comment.ParentID)
+	if err != nil {
+		return nil, err
+	}
+	return r.CommentService.CreateSubComment(ctx, entity.Comment{
+		Body:     comment.Body,
+		UserId:   comment.UserID,
+		PostId:   com.PostId,
+		ParentId: &comment.ParentID,
+	})
 }
 
 // Posts is the resolver for the Posts field.
 func (r *queryResolver) Posts(ctx context.Context, limit *int) ([]*entity.Post, error) {
-	panic(fmt.Errorf("not implemented: Posts - Posts"))
+	return r.PostService.GetPosts(ctx, limit)
 }
 
 // Post is the resolver for the Post field.
 func (r *queryResolver) Post(ctx context.Context, postID int) (*entity.Post, error) {
-	panic(fmt.Errorf("not implemented: Post - Post"))
+	return r.PostService.GetPostById(ctx, postID)
 }
 
 // Comments is the resolver for the Comments field.
 func (r *queryResolver) Comments(ctx context.Context, limit *int) ([]*entity.Comment, error) {
-	panic(fmt.Errorf("not implemented: Comments - Comments"))
+	return r.CommentService.GetComments(ctx, limit)
 }
 
 // Comment is the resolver for the Comment field.
 func (r *queryResolver) Comment(ctx context.Context, commentID int) (*entity.Comment, error) {
-	panic(fmt.Errorf("not implemented: Comment - Comment"))
+	return r.CommentService.GetCommentById(ctx, commentID)
 }
 
 // RegisterComment is the resolver for the registerComment field.
 func (r *subscriptionResolver) RegisterComment(ctx context.Context, userID int, postID int) (<-chan *entity.Comment, error) {
-	panic(fmt.Errorf("not implemented: RegisterComment - registerComment"))
+	return r.SubscriptionService.RegisterSubscription(ctx, userID, postID)
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -12,6 +12,9 @@ type PostService struct {
 }
 
 func (ps *PostService) CreatePost(ctx context.Context, post entity.Post) (*entity.Post, error) {
+	panic("not implemented")
+}
 
-	return ps.repository.CreatePost(ctx, &post)
+func (ps *PostService) GetPosts(ctx context.Context, limit int) ([]*entity.Post, error) {
+	panic("not implemented")
 }

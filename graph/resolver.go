@@ -9,6 +9,14 @@ import (
 )
 
 type Resolver struct {
-	PostService    service.Post
-	CommentService service.Comment
+	PostService         service.Post
+	CommentService      service.Comment
+	SubscriptionService service.Subscription
+}
+
+func NewResolver(postService service.Post, commentService service.Comment) *Resolver {
+	return &Resolver{
+		PostService:    postService,
+		CommentService: commentService,
+	}
 }

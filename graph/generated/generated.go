@@ -54,9 +54,9 @@ type ComplexityRoot struct {
 		ID              func(childComplexity int) int
 		Indentation     func(childComplexity int) int
 		ParentId        func(childComplexity int) int
-		PostID          func(childComplexity int) int
+		PostId          func(childComplexity int) int
 		RelatedComments func(childComplexity int) int
-		UserID          func(childComplexity int) int
+		UserId          func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -69,8 +69,8 @@ type ComplexityRoot struct {
 		Body            func(childComplexity int) int
 		Comments        func(childComplexity int) int
 		CommentsAllowed func(childComplexity int) int
-		ID              func(childComplexity int) int
-		UserID          func(childComplexity int) int
+		Id              func(childComplexity int) int
+		UserId          func(childComplexity int) int
 	}
 
 	Query struct {
@@ -148,11 +148,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Comment.ParentId(childComplexity), true
 
 	case "Comment.postId":
-		if e.complexity.Comment.PostID == nil {
+		if e.complexity.Comment.PostId == nil {
 			break
 		}
 
-		return e.complexity.Comment.PostID(childComplexity), true
+		return e.complexity.Comment.PostId(childComplexity), true
 
 	case "Comment.relatedComments":
 		if e.complexity.Comment.RelatedComments == nil {
@@ -162,11 +162,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Comment.RelatedComments(childComplexity), true
 
 	case "Comment.userId":
-		if e.complexity.Comment.UserID == nil {
+		if e.complexity.Comment.UserId == nil {
 			break
 		}
 
-		return e.complexity.Comment.UserID(childComplexity), true
+		return e.complexity.Comment.UserId(childComplexity), true
 
 	case "Mutation.createComment":
 		if e.complexity.Mutation.CreateComment == nil {
@@ -226,18 +226,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Post.CommentsAllowed(childComplexity), true
 
 	case "Post.id":
-		if e.complexity.Post.ID == nil {
+		if e.complexity.Post.Id == nil {
 			break
 		}
 
-		return e.complexity.Post.ID(childComplexity), true
+		return e.complexity.Post.Id(childComplexity), true
 
 	case "Post.userId":
-		if e.complexity.Post.UserID == nil {
+		if e.complexity.Post.UserId == nil {
 			break
 		}
 
-		return e.complexity.Post.UserID(childComplexity), true
+		return e.complexity.Post.UserId(childComplexity), true
 
 	case "Query.comment":
 		if e.complexity.Query.Comment == nil {
@@ -940,7 +940,7 @@ func (ec *executionContext) _Comment_userId(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
+		return obj.UserId, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -984,7 +984,7 @@ func (ec *executionContext) _Comment_postId(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PostID, nil
+		return obj.PostId, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1423,7 +1423,7 @@ func (ec *executionContext) _Post_id(ctx context.Context, field graphql.Collecte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return obj.Id, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1511,7 +1511,7 @@ func (ec *executionContext) _Post_userId(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
+		return obj.UserId, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
