@@ -8,15 +8,16 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/M1RCLE/comments/src/entity"
+	db "github.com/M1RCLE/comments/src/repository/database"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/M1RCLE/comments/server"
-	"github.com/M1RCLE/comments/src/repository/contract"
-	inmemory "github.com/M1RCLE/comments/src/repository/inmemory"
-
 	"github.com/M1RCLE/comments/src/config"
+	contracts "github.com/M1RCLE/comments/src/repository/contract"
+	inmemory "github.com/M1RCLE/comments/src/repository/inmemory"
 	"github.com/M1RCLE/comments/src/service"
 )
 
@@ -28,7 +29,7 @@ func StartApp() {
 
 	log.Logger = setupLog()
 
-	var repository contract.Repository
+	var MediaRepository contracts.Repository
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -37,60 +38,60 @@ func StartApp() {
 
 	switch cfg.RepositoryType {
 	case "postgres":
-		// commentStorage, err := db.NewStorage[entity.Comment](*cfg)
-		// if err != nil {
-		// 	log.Fatal().Err(err).Msg("Failed to create comment storage")
-		// }
+		commentStorage, err := db.NewStorage[entity.Comment](*cfg)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to create comment storage")
+		}
 
-		// log.Info().Msg("Comment storage connected...")
+		log.Info().Msg("Comment storage connected...")
 
-		// errGroup.Go(func() error {
-		// 	<-errCtx.Done()
-		// 	if err = commentStorage.Close(); err != nil {
-		// 		return fmt.Errorf("failed to close comment storage %w", err)
-		// 	}
+		errGroup.Go(func() error {
+			<-errCtx.Done()
+			if err = commentStorage.Close(); err != nil {
+				return fmt.Errorf("failed to close comment storage %w", err)
+			}
 
-		// 	log.Info().Msg("Comment storage disconnected...")
-		// 	return nil
-		// })
+			log.Info().Msg("Comment storage disconnected...")
+			return nil
+		})
 
-		// postStorage, err := db.NewStorage[entity.Post](*cfg)
-		// if err != nil {
-		// 	log.Fatal().Err(err).Msg("Failed to create post storage")
-		// }
+		postStorage, err := db.NewStorage[entity.Post](*cfg)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to create post storage")
+		}
 
-		// log.Info().Msg("Post storage connected...")
+		log.Info().Msg("Post storage connected...")
 
-		// errGroup.Go(func() error {
-		// 	<-errCtx.Done()
-		// 	if err = postStorage.Close(); err != nil {
-		// 		return fmt.Errorf("failed to close comment storage %w", err)
-		// 	}
+		errGroup.Go(func() error {
+			<-errCtx.Done()
+			if err = postStorage.Close(); err != nil {
+				return fmt.Errorf("failed to close comment storage %w", err)
+			}
 
-		// 	log.Info().Msg("Post storage disconnected...")
-		// 	return nil
-		// })
+			log.Info().Msg("Post storage disconnected...")
+			return nil
+		})
 
-		// MediaRepository = db.NewDatabaseMedia(commentStorage, postStorage)
+		MediaRepository = db.NewDatabaseRepository(postStorage, commentStorage)
 
 	case "in_memory":
 		log.Info().Msg("In-memory storage connected...")
-		repository = inmemory.NewStorage()
+		MediaRepository = inmemory.NewStorage()
 	default:
 		log.Fatal().Msg("Unknown repository type")
 	}
 
-	log.Info().Msg("Repository started...")
+	log.Info().Msg("Media repository started...")
 
-	commentService := service.NewCommentService(repository)
-	postService := service.NewPostService(repository)
-	subscriptionService := service.NewSubscriptionService(repository)
+	commentService := service.NewCommentService(MediaRepository)
+	postService := service.NewPostService(MediaRepository)
+	subscriptionService := service.NewSubscriptionService(MediaRepository)
 
 	router := server.NewRouter(commentService, postService, subscriptionService)
 
 	controller := server.NewMediaController(router.Mux, cfg.Port)
 	controller.Start()
-	log.Info().Msg("Controller started...")
+	log.Info().Msg("Media controller started...")
 
 	log.Info().Msg("App started...")
 
