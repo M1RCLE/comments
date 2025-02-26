@@ -9,6 +9,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/jmoiron/sqlx v1.4.0
+
 	github.com/rs/zerolog v1.33.0
 	github.com/vektah/gqlparser/v2 v2.5.22
 	golang.org/x/net v0.35.0
