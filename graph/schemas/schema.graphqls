@@ -3,9 +3,9 @@
 # https://gqlgen.com/getting-started/
 
 type Query {
-  posts(limit: Int = 5): [Post!]
+  posts(limit: Int = 5, offset: Int = 10): [Post!]
   post(postId: ID!): Post!
-  comments(limit: Int = 5): [Comment!]
+  comments(limit: Int = 5, offset: Int = 10): [Comment!]
   comment(commentId: ID!): Comment!
 }
 

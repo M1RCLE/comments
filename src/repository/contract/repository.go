@@ -12,9 +12,10 @@ type Repository interface {
 	GetPostById(ctx context.Context, postId int) (*entity.Post, error)
 	DeletePost(ctx context.Context, postId int) error
 
-	IngnoreCommentsForPost(ctx context.Context, postId int) error
+	SwitchPostAllowance(ctx context.Context, postId int) error
 	CreateComment(ctx context.Context, comment entity.Comment) (*entity.Comment, error)
 	CreateSubComment(ctx context.Context, comment entity.Comment) (*entity.Comment, error)
-	GetCommentsOffsetPagination(ctx context.Context, pagination entity.Pagination) ([]*entity.Comment, error)
+	GetComments(ctx context.Context, pagination entity.Pagination) ([]*entity.Comment, error)
+	GetCommentById(ctx context.Context, commentId int) (*entity.Comment, error)
 	DeleteComment(ctx context.Context, commentId int) error
 }

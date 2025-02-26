@@ -15,6 +15,6 @@ func (ps *PostService) CreatePost(ctx context.Context, post entity.Post) (*entit
 	panic("not implemented")
 }
 
-func (ps *PostService) GetPosts(ctx context.Context, limit int) ([]*entity.Post, error) {
+func (ps *PostService) GetPosts(ctx context.Context, limit *int, offset *int) ([]*entity.Post, error) {
 	panic("not implemented")
 }

@@ -152,6 +152,19 @@ func (r *InmemoryRepository) GetComments(_ context.Context, pagination entity.Pa
 	return PartialSort(comments, pagination), nil
 }
 
+func (r *InmemoryRepository) GetCommentById(_ context.Context, commentId int) (*entity.Comment, error) {
+	r.RLock()
+	defer r.RUnlock()
+
+	for _, post := range r.storage {
+		if comment, exists := post.Comments[commentId]; exists {
+			return comment, nil
+		}
+	}
+
+	return nil, &entity.ProcessError{Message: "comment not found"}
+}
+
 func (r *InmemoryRepository) DeleteComment(_ context.Context, commentId int) error {
 	r.Lock()
 	defer r.Unlock()

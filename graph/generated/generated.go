@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -40,7 +41,6 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	Comment() CommentResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Subscription() SubscriptionResolver
@@ -76,9 +76,9 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Comment  func(childComplexity int, commentID int) int
-		Comments func(childComplexity int, limit *int) int
+		Comments func(childComplexity int, limit *int, offset *int) int
 		Post     func(childComplexity int, postID int) int
-		Posts    func(childComplexity int, limit *int) int
+		Posts    func(childComplexity int, limit *int, offset *int) int
 	}
 
 	Subscription struct {
@@ -86,18 +86,15 @@ type ComplexityRoot struct {
 	}
 }
 
-type CommentResolver interface {
-	CreationTime(ctx context.Context, obj *entity.Comment) (string, error)
-}
 type MutationResolver interface {
 	CreatePost(ctx context.Context, post model.PostInput) (*entity.Post, error)
 	CreateComment(ctx context.Context, comment model.CommentInput) (*entity.Comment, error)
 	CreateSubComment(ctx context.Context, comment model.SubCommentInput) (*entity.Comment, error)
 }
 type QueryResolver interface {
-	Posts(ctx context.Context, limit *int) ([]*entity.Post, error)
+	Posts(ctx context.Context, limit *int, offset *int) ([]*entity.Post, error)
 	Post(ctx context.Context, postID int) (*entity.Post, error)
-	Comments(ctx context.Context, limit *int) ([]*entity.Comment, error)
+	Comments(ctx context.Context, limit *int, offset *int) ([]*entity.Comment, error)
 	Comment(ctx context.Context, commentID int) (*entity.Comment, error)
 }
 type SubscriptionResolver interface {
@@ -265,7 +262,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Comments(childComplexity, args["limit"].(*int)), true
+		return e.complexity.Query.Comments(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Query.post":
 		if e.complexity.Query.Post == nil {
@@ -289,7 +286,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Posts(childComplexity, args["limit"].(*int)), true
+		return e.complexity.Query.Posts(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Subscription.registerSubscription":
 		if e.complexity.Subscription.RegisterSubscription == nil {
@@ -428,7 +425,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schemas/comment.graphqls", Input: `scalar CreationTime
+	{Name: "../schemas/comment.graphqls", Input: `scalar Time
 
 type Comment {
     id: ID!,
@@ -436,14 +433,14 @@ type Comment {
     postId: ID!,
     body: String!,
     parentId: ID,
-    creationTime: CreationTime!
+    creationTime: Time!
     relatedComments: [Comment!],
 }
 
 input CommentInput {
     userId: ID!,
     postId: ID!,
-    creationTime: CreationTime!,
+    creationTime: Time!,
     body: String!,
 }
 
@@ -451,7 +448,7 @@ input SubCommentInput {
     userId: ID!,
     postId: ID!,
     parentId: ID!,
-    creationTime: CreationTime!,
+    creationTime: Time!,
     body: String!,
 }`, BuiltIn: false},
 	{Name: "../schemas/post.graphqls", Input: `type Post {
@@ -472,9 +469,9 @@ input PostInput {
 # https://gqlgen.com/getting-started/
 
 type Query {
-  posts(limit: Int = 5): [Post!]
+  posts(limit: Int = 5, offset: Int = 10): [Post!]
   post(postId: ID!): Post!
-  comments(limit: Int = 5): [Comment!]
+  comments(limit: Int = 5, offset: Int = 10): [Comment!]
   comment(commentId: ID!): Comment!
 }
 
@@ -643,6 +640,11 @@ func (ec *executionContext) field_Query_comments_args(ctx context.Context, rawAr
 		return nil, err
 	}
 	args["limit"] = arg0
+	arg1, err := ec.field_Query_comments_argsOffset(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Query_comments_argsLimit(
@@ -656,6 +658,24 @@ func (ec *executionContext) field_Query_comments_argsLimit(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_comments_argsOffset(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	if _, ok := rawArgs["offset"]; !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+	if tmp, ok := rawArgs["offset"]; ok {
 		return ec.unmarshalOInt2ᚖint(ctx, tmp)
 	}
 
@@ -699,6 +719,11 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["limit"] = arg0
+	arg1, err := ec.field_Query_posts_argsOffset(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Query_posts_argsLimit(
@@ -712,6 +737,24 @@ func (ec *executionContext) field_Query_posts_argsLimit(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
 	if tmp, ok := rawArgs["limit"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_posts_argsOffset(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	if _, ok := rawArgs["offset"]; !ok {
+		var zeroVal *int
+		return zeroVal, nil
+	}
+
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+	if tmp, ok := rawArgs["offset"]; ok {
 		return ec.unmarshalOInt2ᚖint(ctx, tmp)
 	}
 
@@ -1121,7 +1164,7 @@ func (ec *executionContext) _Comment_creationTime(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Comment().CreationTime(rctx, obj)
+		return obj.CreationTime, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1133,19 +1176,19 @@ func (ec *executionContext) _Comment_creationTime(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalNCreationTime2string(ctx, field.Selections, res)
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Comment_creationTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Comment",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CreationTime does not have child fields")
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1664,7 +1707,7 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Posts(rctx, fc.Args["limit"].(*int))
+		return ec.resolvers.Query().Posts(rctx, fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1795,7 +1838,7 @@ func (ec *executionContext) _Query_comments(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Comments(rctx, fc.Args["limit"].(*int))
+		return ec.resolvers.Query().Comments(rctx, fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4117,7 +4160,7 @@ func (ec *executionContext) unmarshalInputCommentInput(ctx context.Context, obj 
 			it.PostID = data
 		case "creationTime":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creationTime"))
-			data, err := ec.unmarshalNCreationTime2string(ctx, v)
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4213,7 +4256,7 @@ func (ec *executionContext) unmarshalInputSubCommentInput(ctx context.Context, o
 			it.ParentID = data
 		case "creationTime":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("creationTime"))
-			data, err := ec.unmarshalNCreationTime2string(ctx, v)
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4253,61 +4296,30 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 		case "id":
 			out.Values[i] = ec._Comment_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "userId":
 			out.Values[i] = ec._Comment_userId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "postId":
 			out.Values[i] = ec._Comment_postId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "body":
 			out.Values[i] = ec._Comment_body(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "parentId":
 			out.Values[i] = ec._Comment_parentId(ctx, field, obj)
 		case "creationTime":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Comment_creationTime(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Comment_creationTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "relatedComments":
 			out.Values[i] = ec._Comment_relatedComments(ctx, field, obj)
 		default:
@@ -4973,21 +4985,6 @@ func (ec *executionContext) unmarshalNCommentInput2githubᚗcomᚋM1RCLEᚋcomme
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreationTime2string(ctx context.Context, v any) (string, error) {
-	res, err := graphql.UnmarshalString(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCreationTime2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNID2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5040,6 +5037,21 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 func (ec *executionContext) unmarshalNSubCommentInput2githubᚗcomᚋM1RCLEᚋcommentsᚋgraphᚋmodelᚐSubCommentInput(ctx context.Context, v any) (model.SubCommentInput, error) {
 	res, err := ec.unmarshalInputSubCommentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

@@ -23,10 +23,6 @@ func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput)
 
 // CreateComment is the resolver for the createComment field.
 func (r *mutationResolver) CreateComment(ctx context.Context, comment model.CommentInput) (*entity.Comment, error) {
-	// TODO: перенести проверку в сервис
-	if len(comment.Body) >= 2000 {
-		return nil, &entity.ProcessError{Message: "Comment body is too large"}
-	}
 	return r.CommentService.CreateComment(ctx, entity.Comment{
 		Body:   comment.Body,
 		UserId: comment.UserID,
@@ -36,45 +32,37 @@ func (r *mutationResolver) CreateComment(ctx context.Context, comment model.Comm
 
 // CreateSubComment is the resolver for the createSubComment field.
 func (r *mutationResolver) CreateSubComment(ctx context.Context, comment model.SubCommentInput) (*entity.Comment, error) {
-	// TODO: перенести проверку в сервис
-	if len(comment.Body) >= 2000 {
-		return nil, &entity.ProcessError{Message: "Comment body is too large"}
-	}
-	com, err := r.CommentService.GetCommentById(ctx, comment.ParentID)
-	if err != nil {
-		return nil, err
-	}
 	return r.CommentService.CreateSubComment(ctx, entity.Comment{
 		Body:     comment.Body,
 		UserId:   comment.UserID,
-		PostId:   com.PostId,
+		PostId:   comment.PostID,
 		ParentId: &comment.ParentID,
 	})
 }
 
 // Posts is the resolver for the Posts field.
-func (r *queryResolver) Posts(ctx context.Context, limit *int) ([]*entity.Post, error) {
-	return r.PostService.GetPosts(ctx, limit)
+func (r *queryResolver) Posts(ctx context.Context, limit *int, offset *int) ([]*entity.Post, error) {
+	return r.PostService.GetPosts(ctx, limit, offset)
 }
 
 // Post is the resolver for the Post field.
-func (r *queryResolver) Post(ctx context.Context, postId int) (*entity.Post, error) {
-	return r.PostService.GetPostById(ctx, postId)
+func (r *queryResolver) Post(ctx context.Context, postID int) (*entity.Post, error) {
+	return r.PostService.GetPostById(ctx, postID)
 }
 
 // Comments is the resolver for the Comments field.
-func (r *queryResolver) Comments(ctx context.Context, limit *int) ([]*entity.Comment, error) {
-	return r.CommentService.GetComments(ctx, limit)
+func (r *queryResolver) Comments(ctx context.Context, limit *int, offset *int) ([]*entity.Comment, error) {
+	return r.CommentService.GetComments(ctx, limit, offset)
 }
 
 // Comment is the resolver for the Comment field.
-func (r *queryResolver) Comment(ctx context.Context, commentId int) (*entity.Comment, error) {
-	return r.CommentService.GetCommentById(ctx, commentId)
+func (r *queryResolver) Comment(ctx context.Context, commentID int) (*entity.Comment, error) {
+	return r.CommentService.GetCommentById(ctx, commentID)
 }
 
 // RegisterSubscription is the resolver for the registerSubscription field.
-func (r *subscriptionResolver) RegisterSubscription(ctx context.Context, userId int, postId int) (<-chan *entity.Comment, error) {
-	return r.SubscriptionService.RegisterSubscription(ctx, userId, postId)
+func (r *subscriptionResolver) RegisterSubscription(ctx context.Context, userID int, postID int) (<-chan *entity.Comment, error) {
+	return r.SubscriptionService.RegisterSubscription(ctx, userID, postID)
 }
 
 // Mutation returns generated.MutationResolver implementation.
