@@ -17,7 +17,7 @@ type Router struct {
 }
 
 func NewRouter(commentService contracts.Comment, postService contracts.Post, subscriptionService contracts.Subscription) *Router {
-	srv := handler.New(generated.NewExecutableSchema(generated.Config{
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
 		Resolvers: graph.NewResolver(postService, commentService, subscriptionService),
 	}))
 

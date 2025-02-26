@@ -44,3 +44,60 @@
 - /        : GraphQL Playground
 
 Схемы GraphQL находится в папке **graph/schemas**
+
+
+### Create post
+```
+mutation CreatePost($post: PostInput!) {
+   createPost(post: $post) {
+      id
+      body
+      userId
+      comments {
+         id
+         userId
+         postId
+         body
+         parentId
+         creationTime
+      }
+      commentsAllowed
+   }
+}
+
+variables 
+{
+  "post": {
+    "userId": "123",
+    "body": "This is my first post!",
+    "commentsAllowed": true
+  }
+}
+```
+
+### Get post
+```
+query Post($postId: ID!) {
+  post(postId: $postId) {
+    id
+    body
+    userId
+    comments {
+      id
+      userId
+      postId
+      body
+      parentId
+      creationTime
+    }
+    commentsAllowed
+  }
+}
+
+variables
+{
+  "postId": 1
+}
+```
+
+

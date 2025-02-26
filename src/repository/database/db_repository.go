@@ -24,7 +24,6 @@ func NewDatabaseRepository(postStorage *Storage[entity.Post], commentStorage *St
 	}
 }
 
-// Create a new post
 func (d *DatabaseRepository) CreatePost(ctx context.Context, post entity.Post) (*entity.Post, error) {
 	query, args, err := d.sqlBuilder.Insert("post").
 		Columns("user_id", "body", "comments_allowed", "creation_time").
@@ -42,7 +41,6 @@ func (d *DatabaseRepository) CreatePost(ctx context.Context, post entity.Post) (
 	return &createdPost, nil
 }
 
-// Get multiple posts with pagination
 func (d *DatabaseRepository) GetPosts(ctx context.Context, pagination entity.Pagination) ([]*entity.Post, error) {
 	var posts []*entity.Post
 
