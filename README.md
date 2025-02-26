@@ -45,7 +45,8 @@
 
 Схемы GraphQL находится в папке **graph/schemas**
 
-
+env variables 
+`REPO_TYPE=in_memory`
 ### Create post
 ```
 mutation CreatePost($post: PostInput!) {
