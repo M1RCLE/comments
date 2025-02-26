@@ -12,6 +12,10 @@ type CommentService struct {
 	repository contract.Repository
 }
 
+func NewCommentService(repository contract.Repository) *CommentService {
+	return &CommentService{repository: repository}
+}
+
 func (cs *CommentService) CreateComment(ctx context.Context, comment entity.Comment) (*entity.Comment, error) {
 	if comment.Body == "" || len(comment.Body) > 2000 {
 		return nil, &entity.ProcessError{Message: "comment body is required"}
@@ -51,14 +55,14 @@ func (cs *CommentService) CreateSubComment(ctx context.Context, comment entity.C
 	return cs.repository.CreateSubComment(ctx, comment)
 }
 
-func (cs *CommentService) GetAllComments(ctx context.Context, commentID int) (*entity.Comment, error) {
-	panic("not implemented")
+func (cs *CommentService) GetCommentById(ctx context.Context, commentID int) (*entity.Comment, error) {
+	return cs.repository.GetCommentById(ctx, commentID)
 }
 
 func (cs *CommentService) GetComments(ctx context.Context, limit *int, offset *int) ([]*entity.Comment, error) {
-	panic("not implemented")
+	return cs.repository.GetComments(ctx, entity.Pagination{Limit: *limit, Offset: *offset})
 }
 
-func (cs *CommentService) DeleteComment(ctx context.Context, commentID string) error {
-	panic("not implemented")
+func (cs *CommentService) DeleteComment(ctx context.Context, commentID int) error {
+	return cs.DeleteComment(ctx, commentID)
 }

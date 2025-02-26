@@ -8,7 +8,7 @@ import (
 
 type Repository interface {
 	CreatePost(ctx context.Context, post entity.Post) (*entity.Post, error)
-	GetPosts(ctx context.Context, limit *int) ([]*entity.Post, error)
+	GetPosts(ctx context.Context, pagination entity.Pagination) ([]*entity.Post, error)
 	GetPostById(ctx context.Context, postId int) (*entity.Post, error)
 	DeletePost(ctx context.Context, postId int) error
 
